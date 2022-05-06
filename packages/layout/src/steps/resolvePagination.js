@@ -53,12 +53,6 @@ const relayoutPage = compose(
   resolvePageDimensions,
 );
 
-const warnUnavailableSpace = node => {
-  console.warn(
-    `Node of type ${node.type} can't wrap between pages and it's bigger than available page height`,
-  );
-};
-
 const splitNodes = (height, contentArea, nodes) => {
   const currentChildren = [];
   const nextChildren = [];
@@ -88,11 +82,13 @@ const splitNodes = (height, contentArea, nodes) => {
       continue;
     }
 
-    if (!fitsInsidePage && !canWrap) {
-      currentChildren.push(child);
-      nextChildren.push(...futureNodes);
-      warnUnavailableSpace(child);
-      break;
+    if ((!fitsInsidePage && !canWrap) || (shouldSplit && !shouldBreak)) {
+      const [currentChild, nextChild] = split(child, height, contentArea);
+
+      if (currentChild) currentChildren.push(currentChild);
+      if (nextChild) nextChildren.push(nextChild);
+
+      continue;
     }
 
     if (shouldBreak) {
@@ -107,15 +103,6 @@ const splitNodes = (height, contentArea, nodes) => {
       currentChildren.push(...futureFixedNodes);
       nextChildren.push(next, ...futureNodes);
       break;
-    }
-
-    if (shouldSplit) {
-      const [currentChild, nextChild] = split(child, height, contentArea);
-
-      if (currentChild) currentChildren.push(currentChild);
-      if (nextChild) nextChildren.push(nextChild);
-
-      continue;
     }
 
     currentChildren.push(child);
